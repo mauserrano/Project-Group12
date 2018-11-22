@@ -1,0 +1,118 @@
+---
+title: 'La Liga'
+author: "Group 12"
+date: "November 21, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Description of "La Liga" (Spain soccer)
+"La Liga" is the professional soccer league of Spain. The League follows a double round competition format in which each team meets all other contestants (as home team and away team). Each season, La Liga has 20 teams. Thus, there are 10 games each week in a tournament of 38 weeks (match days). Hence, each season has a total of 380 games. Each team receives 3 points for a win, 1 point for a draw, and 0 points for a loss. Teams are ranked by total points, and the team ranked first at the end of the season is the Champion. 
+# Data set
+The data set can be accessed online here: 
+https://datahub.io/sports-data/spanish-la-liga#resource-season-1819 
+There are 10 csv files that includes the results for each game of the current season and the last 9 seasons.
+Some of the columns include the following information:
+Div = League Division
+Date = Match Date (dd/mm/yy)
+HomeTeam = Home Team
+AwayTeam = Away Team
+FTHG= Full Time Home Team Goals
+FTAG= Full Time Away Team Goals
+FTR= Full Time Result (H=Home Win, D=Draw, A=Away Win)
+HTHG = Half Time Home Team Goals
+HTAG = Half Time Away Team Goals
+HTR = Half Time Result (H=Home Win, D=Draw, A=Away Win)
+HS = Home Team Shots
+AS = Away Team Shots
+HST = Home Team Shots on Target
+AST = Away Team Shots on Target
+HC = Home Team Corners
+AC = Away Team Corners
+HF = Home Team Fouls Committed
+AF = Away Team Fouls Committed
+HY = Home Team Yellow Cards
+AY = Away Team Yellow Cards
+HR = Home Team Red Cards
+AR = Away Team Red Cards
+A link for the complete description of the columns is here:  http://www.football-data.co.uk/notes.txt
+
+# Getting started
+### Here we get a csv file for all the seasons and the 22 columns we are interested in
+```{r}
+getwd() #gives the working directory
+setwd("C:/Users/mserrano/Documents/STATS/Stat 579/Final Project/LaLiga") # note you have to use this slash "/" if you are using a PC. Be sure all your csv files are in this directory.
+season0910<- read.csv("season-0910.csv")
+season1011<- read.csv("season-1011.csv")
+season1112<- read.csv("season-1112.csv")
+season1213<- read.csv("season-1213.csv")
+season1314<- read.csv("season-1314.csv")
+season1415<- read.csv("season-1415.csv")
+season1516<- read.csv("season-1516.csv")
+season1617<- read.csv("season-1617.csv")
+season1718<- read.csv("season-1718.csv")
+
+#selecting the same number columns (22) for each season
+library(dplyr)
+season0910 <- season0910 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+season1011 <- season1011 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+season1112 <- season1112 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+season1213 <- season1213 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+season1314 <- season1314 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+season1415 <- season1415 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+season1516 <- season1516 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+season1617 <- season1617 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+season1718 <- season1718 %>% select(Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,HS,AS,HST,AST,HF,AF,HC,AC,HY,                      AY,HR,AR) 
+
+allseasons <- rbind(season0910,season1011,season1112,season1213,season1314,season1415,
+                    season1516,season1617, season1718)
+write.csv(allseasons,"allseasons.csv")
+```
+
+
+# Part5
+5- When a team get a red card, a) does it imply that the team is going to lose the game? b) In the cases a team which is shown a red card loses the game, is the goal difference larger than the goal difference in  games  without red card? 
+For this part of the exploration we will select those games where a red card was shown to the team that lost the game (the red card implies a player is kicked out of the game). Then we will calculate the goal difference in those games.
+From these variable we formulate the following hypothesis:
+.	We hypothesize that the team with a red card has higher chances to lose the game.
+.	Also, the goal difference in those games when a red card is shown is larger in comparison to games with no red cards.
+
+```{r}
+head(allseasons)
+#create a column for red_win  and red_lose
+#allseasons<- allseasons %>% mutate(red_win=ifelse(HR>0 &FTR=="H"| AR>0 &FTR=="A",1,0),
+#                      red_lose=ifelse(HR>0 &FTR=="A" | AR>0 &FTR=="H",1,0))
+
+allseasons<- allseasons %>% mutate(red_WL=ifelse(HR>0 &FTR=="H"| AR>0 &FTR=="A","red_win",
+                                                (ifelse(HR>0 &FTR=="A" | AR>0 &FTR=="H","red_lose",0))))
+
+#create a graph using ggplot. 
+#red_win: got red card and won the game
+#red_lose: got red card and lose the game
+library(ggplot2)                                                                                          
+allseasons %>% filter(red_WL %in% c("red_win","red_lose")) %>% 
+  ggplot(aes(x=red_WL,fill=red_WL)) + geom_bar()
+
+#create a column for the goal difference. Note the use of abs() for absolute value.
+#create a column to indicate a red card was shown on either home team or away team
+allseasons<- allseasons %>% mutate(goal_dif=abs(FTHG - FTAG),
+                                   red_shown=ifelse(HR>0|AR>0,"Red_shown","No_Red_cards"))
+
+#Graph for average goal diference per game for "Red_shown" and "No_Red_cards"
+allseasons %>% group_by(red_shown) %>% summarize(mean_goal_dif=mean(goal_dif)) 
+allseasons %>% group_by(red_shown) %>% summarize(mean_goal_dif=mean(goal_dif)) %>%
+  ggplot(aes(x=red_shown, y=mean_goal_dif, fill= red_shown)) + geom_col()
+
+#Graph for average goal difference per game for Red_lose and Red_win
+allseasons %>% group_by(red_WL) %>% summarize(mean_goal_dif=mean(goal_dif)) 
+allseasons %>% group_by(red_WL) %>% summarize(mean_goal_dif=mean(goal_dif)) %>%
+  ggplot(aes(x=red_WL, y=mean_goal_dif, fill=red_WL)) + geom_col()
+
+
+```
+
+
+
