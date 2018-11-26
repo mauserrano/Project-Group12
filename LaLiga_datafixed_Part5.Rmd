@@ -1,0 +1,73 @@
+---
+title: "La Liga Part5"
+author: "Mauricio"
+date: "11/26/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Part5
+5- When a team get a red card, a) does it imply that the team is going to lose the game? b) In the cases a team which is shown a red card loses the game, is the goal difference larger than the goal difference in  games  without red card? 
+For this part of the exploration we will select those games where a red card was shown to the team that lost the game (the red card implies a player is kicked out of the game). Then we will calculate the goal difference in those games.
+From these variable we formulate the following hypothesis:
+.	We hypothesize that the team with a red card has higher chances to lose the game.
+.	Also, the goal difference in those games when a red card is shown is larger in comparison to games with no red cards.
+
+```{r}
+#load football_date.RDS first
+#write.csv(football_date,"allseasons.csv")
+allseasons<-read.csv("allseasons.csv")
+
+library(dplyr)
+
+#create a column for red_win, red_lose, red_draw and no_red
+allseasons<- allseasons %>% mutate(red_WL=ifelse(HR>0 &FTR=="H"| AR>0 &FTR=="A","red_win",
+  (ifelse(HR>0 &FTR=="A" | AR>0 &FTR=="H","red_lose",(ifelse(HR>0 &FTR=="D"| AR>0 & FTR=="D","red_draw","no_red"))))))
+
+library(ggplot2) 
+
+#create a graph using ggplot. 
+#red_win: got red card and won the game
+#red_lose: got red card and lose the game 
+allseasons %>% filter(red_WL %in% c("red_win","red_lose", "red_draw")) %>% 
+  ggplot(aes(x=red_WL,fill=red_WL)) + geom_bar()
+
+```
+### 
+- From the graph above we can see the amount of lost games is larger when a red card is shown to a team. 
+
+
+```{r}
+#create a column for the goal difference. Note the use of abs() for absolute value.
+#create a column to indicate a red card was shown on either home team or away team
+allseasons<- allseasons %>% mutate(goal_dif=abs(FTHG - FTAG),
+                                   red_shown=ifelse(HR>0|AR>0,"Red_shown","No_Red_cards"))
+
+#Graph for average goal diference per game for "Red_shown" and "No_Red_cards"
+allseasons %>% group_by(red_shown) %>% summarize(mean_goal_dif=mean(goal_dif), n=n()) 
+allseasons %>% group_by(red_shown) %>% summarize(mean_goal_dif=mean(goal_dif), n=n()) %>%
+  ggplot(aes(x=red_shown, y=mean_goal_dif, fill= n)) + geom_col()
+
+#T-test comparing averages
+nored<-allseasons %>% filter(red_shown=="No_Red_cards") %>% select(goal_dif)
+red<- allseasons %>% filter(red_shown=="Red_shown") %>% select(goal_dif)
+t.test(nored,red)
+```
+
+###  
+- From the table and graph above we see the goal difference in games with No Red cards is larger than the games with at least a red card shown. 
+- This mean goal difference is significant according to t-test (p-value=0.0295). 
+- We have to keep in mind the mean goal difference for games with Red card shown also includes games that ended Draw. Also, the amount of games for each mean (sample size) is different. 
+
+```{r}
+#Graph for average goal difference per game for Red_lose and Red_win
+allseasons %>% group_by(red_WL) %>% summarize(mean_goal_dif=mean(goal_dif),n=n()) 
+allseasons %>% group_by(red_WL) %>% summarize(mean_goal_dif=mean(goal_dif),n=n()) %>%
+  ggplot(aes(x=red_WL, y=mean_goal_dif, fill=n)) + geom_col()
+``` 
+
+### 
+- From the table and graph above we see the mean goal difference is larger when a red card is shown to the team that loses the game.
+
